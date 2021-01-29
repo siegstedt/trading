@@ -10,41 +10,29 @@ The aim is to automate every step of your strategy including, extracting data (s
 
 As a broker at the back of the system, Interactive Brokers will serve me with their Python-wrapped API access.
 
-## Setup
+### To Do
 
-### IB TWS
+General
 
-For getting started you need to get a Interactive Brokers Trading Workstation - abbreviated to IB TWS.
+- [ ] https://youtu.be/8oY1NdPm0mA
 
-Go to their website and just start a free trail. It wouldn't cost any money. Therefore, no harm spinning up one.
+Interactive Brokers 
 
-### Install the IB Python Client
+- [ ] https://youtu.be/nz6F8eNbk1A
 
-Get the latest source code for your machine from here: http://interactivebrokers.github.io/#
+Machine learning algorithms for trading
 
-Navigate to the downloaded folder. Inside the folder, find the path 'source/pythonclient'. Then, run an install command on the setup.py file. Here is how I have done it in my terminal.
+- [ ] https://blog.quantinsti.com/random-forest-algorithm-in-python/
+- [ ] https://www.mql5.com/en/blogs/post/722543
+- [ ] https://medium.com/ai-in-plain-english/creating-a-random-forest-algorithm-for-financial-trading-decision-making-779bfb5a91c7
+- [ ] http://swing.tradingninja.com/how-to-use-random-forests-algorithm-in-trading/
+- [ ] https://blog.quantinsti.com/predicting-stock-trends-technical-analysis-random-forests/
+- [ ] https://pythonforfinance.net/2017/10/10/stochastic-oscillator-trading-strategy-backtest-in-python/
 
-```
-cd twsapi_macunix.976.01/IBJts/source/pythonclient
-python3 setup.py install
-```
+Feature engineering
 
-### API Configuration Settings
+- [ ] https://medium.com/@Nikhilkohli1/extracting-features-for-stock-prediction-streamlit-based-application-a97afc55d926
 
-We need to check the option "Enable ActiveX and Socket Clients" in the TWS App. This is required to enable Interactive Brokers Gateway to listen to API calls on a given port.
+Trading Bitcoins
 
-Note that you need to enter the **correct port number**:
-- TWS Live Trading: 7496
-- TWS Paper Trading: 7497
-- IB Gateway Live Trading: 4001
-- IB Gateway Paper Trading: 4002
-
-Also, check "Read only API" if you want to avoid to place/modify trades accidentily (not relevant for paper tarding).
-
-Optinal: Set the Master API Client ID to any given nummer.
-
-## Understanding the IB API Python Wrapper
-
-Find a thorough docs page here: http://interactivebrokers.github.io/tws-api/
-
-All your the source code of the API Wrapper is stored in the aboev mentioned 'source/pythonclient' folder. Navigate to 'ibapi' from there.
+- [ ] https://youtu.be/iXGnNPL89Wo

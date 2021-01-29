@@ -18,4 +18,3 @@ class TradingApp(EWrapper, EClient):
 app = TradingApp()      
 app.connect("127.0.0.1", 7497, clientId=1)
 app.run()
-    
