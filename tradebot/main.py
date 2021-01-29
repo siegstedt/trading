@@ -144,7 +144,6 @@ def runDataRetrieval():
 
 
 def limitOrder(direction, quantity, lmt_price):
-    """creating object of the limit order class for other function calls"""
     order = Order()
     order.action = direction
     order.orderType = "LMT"
@@ -153,11 +152,30 @@ def limitOrder(direction, quantity, lmt_price):
     return order
 
 
-def mktOrder(direction, quantity):
+def marketOrder(direction, quantity):
     order = Order()
     order.action = direction
     order.orderType = "MKT"
     order.totalQuantity = quantity
+    return order
+
+
+def stopOrder(direction, quantity, st_price):
+    order = Order()
+    order.action = direction
+    order.orderType = "STP"
+    order.totalQuantity = quantity
+    order.auxPrice = st_price
+    return order
+
+
+def trailStopOrder(direction, quantity, st_price, tr_step=1):
+    order = Order()
+    order.action = direction
+    order.orderType = "TRAIL"
+    order.totalQuantity = quantity
+    order.auxPrice = tr_step
+    order.trailStopPrice = st_price
     return order
 
 
@@ -191,11 +209,10 @@ time.sleep(1)
 #
 
 # create a contract object
-#contract = getContract(symbol="AAPL", secType="STK", currency="USD", exchange="SMART")
 contract = getContract(symbol="MSFT", secType="STK", currency="USD", exchange="SMART")
 
 # create an order object
-#order = limitOrder(direction="BUY", quantity=1, lmt_price=200)
+# order = limitOrder(direction="BUY", quantity=1, lmt_price=200)
 order = mktOrder(direction="BUY", quantity=5)
 
 # retrieve a valid order id
