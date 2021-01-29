@@ -14,11 +14,11 @@ As a broker at the back of the system, Interactive Brokers will serve me with th
 
 General
 
-- [ ] https://youtu.be/8oY1NdPm0mA
+- [ ] https://youtu.be/8oY1NdPm0mA "9 Things I Learned from Building an Automated Trading System" on YouTube
 
 Interactive Brokers 
 
-- [ ] https://youtu.be/nz6F8eNbk1A
+- [ ] https://youtu.be/nz6F8eNbk1A "Interactive Brokers API Python Library | Background & Setup Pt. 1" on YouTube
 
 Machine learning algorithms for trading
 
@@ -28,6 +28,9 @@ Machine learning algorithms for trading
 - [ ] http://swing.tradingninja.com/how-to-use-random-forests-algorithm-in-trading/
 - [ ] https://blog.quantinsti.com/predicting-stock-trends-technical-analysis-random-forests/
 - [ ] https://pythonforfinance.net/2017/10/10/stochastic-oscillator-trading-strategy-backtest-in-python/
+- [ ] https://youtu.be/QIUxPv5PJOY "Stock Price Prediction Using Python & Machine Learning" on YouTube
+- [ ] https://youtube.com/channel/UCbmb5IoBtHZTpYZCDBOC1CA Several videos on  "Computer Science" YoutTube Channel
+- [ ] https://youtu.be/kz_NJERCgm8  "Algorithmic Trading Strategy Using MACD & Python" on YouTube
 
 Feature engineering
 
@@ -35,4 +38,4 @@ Feature engineering
 
 Trading Bitcoins
 
-- [ ] https://youtu.be/iXGnNPL89Wo
+- [ ] https://youtu.be/iXGnNPL89Wo "How to do Automated Bitcoin Algo Trading via BTC-e Trade API" on YouTube

@@ -1,14 +1,4 @@
-# My first IB algorithmic trading project
-
-Hi,
-
-welcome to my first algorithmic trading project. There are quite a few points on the ageda for the project.
-
-In a nutshell, I want to design and deploy trading strategies on Interactive Broker's platform. 
-
-The aim is to automate every step of your strategy including, extracting data (stock data and fundamental data), performing technical/fundamental analysis, generating signals, placing trades, risk management etc. 
-
-As a broker at the back of the system, Interactive Brokers will serve me with their Python-wrapped API access.
+# Tutorial notes
 
 ## Setup
 
