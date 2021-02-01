@@ -55,6 +55,7 @@ class TradingApp(EWrapper, EClient):
         )
 
     def nextValidId(self, orderId):
+        """get a new unique order id to avoid clashes across strategies and orders"""
         super().nextValidId(orderId)
         self.nextValidOrderId = orderId
         print("NextValidId:", orderId)
@@ -209,17 +210,23 @@ time.sleep(1)
 #
 
 # create a contract object
-contract = getContract(symbol="MSFT", secType="STK", currency="USD", exchange="SMART")
+contract = getContract(symbol="AAPL", secType="STK", currency="USD", exchange="SMART")
 
 # create an order object
 # order = limitOrder(direction="BUY", quantity=1, lmt_price=200)
-order = mktOrder(direction="BUY", quantity=5)
+order = marketOrder(direction="SELL", quantity=220)
 
 # retrieve a valid order id
 order_id = app.nextValidOrderId
 
 # EClient function to request contract details
 app.placeOrder(order_id, contract, order)
+
+
+#
+# CLOSE
+#
+
 
 # close the connection upon event triger
 event.set()
