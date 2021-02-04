@@ -66,8 +66,10 @@ tickers_data = {"INTC" : {"index":0,"currency":"USD","exchange":"ISLAND"},
 
 for ticker in tickers_data:
     histData(tickers_data[ticker]["index"],
-             generalStk(ticker,tickers_data[ticker]["currency"],tickers_data[ticker]["exchange"]),
-             '1 M', '5 mins')
+            generalStk(ticker,tickers_data[ticker]["currency"],
+            tickers_data[ticker]["exchange"]),
+            '1 M',
+            '5 mins')
     time.sleep(5)  # some latency added to ensure that the contract details request has been processed
 
 ###################storing trade app object in dataframe#######################

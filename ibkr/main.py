@@ -2,10 +2,17 @@
 main script for the trade bot app
 """
 
+# custom modules
+import libs.account as account
+import libs.strategies as strategies
+
+# ibapi modules
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
 from ibapi.contract import Contract
 from ibapi.order import Order
+
+# third party modules
 import threading
 import time
 import pandas as pd
@@ -30,11 +37,11 @@ class TradingApp(EWrapper, EClient):
 
     def error(self, reqId, errorCode, errorString):
         print(
-            f"Error with Request ID {reqId} with Error Code {errorCode}. {errorString}"
+            f" >> app: Error with Request ID {reqId} with Error Code {errorCode}. {errorString}"
         )
 
     def contractDetails(self, reqId, contractDetails):
-        print(f"Request ID: {reqId}, Contract: {contractDetails}")
+        print(f" >> app: Request ID: {reqId}, Contract: {contractDetails}")
 
     def historicalData(self, reqId, bar):
         if reqId not in self.data:
@@ -60,48 +67,48 @@ class TradingApp(EWrapper, EClient):
                 }
             )
         print(
-            f"Request ID:{reqId}: Date {bar.date}, Open {bar.open}, High {bar.high}, Low {bar.low}, Close{bar.close}, Volume {bar.volume}"
+            f" >> app: Data Request #{reqId}: Date {bar.date}, Open {bar.open}, High {bar.high}, Low {bar.low}, Close {bar.close}, Volume {bar.volume}."
         )
 
     def nextValidId(self, orderId):
         """get a new unique order id to avoid clashes across strategies and orders"""
         super().nextValidId(orderId)
         self.nextValidOrderId = orderId
-        print("NextValidId:", orderId)
+        print(" >> app: Next valid order ID:", orderId)
 
     def openOrder(self, orderId, contract, order, orderState):
         """retrieve open orders into a dataframe"""
         super().openOrder(orderId, contract, order, orderState)
-        dictionary = {"PermId":order.permId, "ClientId": order.clientId, "OrderId": orderId, 
+        dictionary = {"PermId": order.permId, "ClientId": order.clientId, "OrderId": orderId,
                       "Account": order.account, "Symbol": contract.symbol, "SecType": contract.secType,
                       "Exchange": contract.exchange, "Action": order.action, "OrderType": order.orderType,
-                      "TotalQty": order.totalQuantity, "CashQty": order.cashQty, 
+                      "TotalQty": order.totalQuantity, "CashQty": order.cashQty,
                       "LmtPrice": order.lmtPrice, "AuxPrice": order.auxPrice, "Status": orderState.status}
         self.order_df = self.order_df.append(dictionary, ignore_index=True)
 
     def position(self, account, contract, position, avgCost):
         """retrieve all current positions to a dataframe"""
         super().position(account, contract, position, avgCost)
-        dictionary = {"Account":account, "Symbol": contract.symbol, "SecType": contract.secType,
+        dictionary = {"Account": account, "Symbol": contract.symbol, "SecType": contract.secType,
                       "Currency": contract.currency, "Position": position, "Avg cost": avgCost}
         self.pos_df = self.pos_df.append(dictionary, ignore_index=True)
 
     def accountSummary(self, reqId, account, tag, value, currency):
         """retrieve an account summary to a dataframe"""
         super().accountSummary(reqId, account, tag, value, currency)
-        dictionary = {"ReqId":reqId, "Account": account, "Tag": tag, "Value": value, "Currency": currency}
+        dictionary = {"ReqId": reqId, "Account": account, "Tag": tag, "Value": value, "Currency": currency}
         self.acc_summary = self.acc_summary.append(dictionary, ignore_index=True)
-        
+
     def pnl(self, reqId, dailyPnL, unrealizedPnL, realizedPnL):
         """retrieve a profit and loss summary to a dataframe"""
         super().pnl(reqId, dailyPnL, unrealizedPnL, realizedPnL)
-        dictionary = {"ReqId":reqId, "DailyPnL": dailyPnL, "UnrealizedPnL": unrealizedPnL, "RealizedPnL": realizedPnL}
-        self.pnl_summary = self.pnl_summary.append(dictionary, ignore_index=True)        
+        dictionary = {"ReqId": reqId, "DailyPnL": dailyPnL, "UnrealizedPnL": unrealizedPnL, "RealizedPnL": realizedPnL}
+        self.pnl_summary = self.pnl_summary.append(dictionary, ignore_index=True)
 
 
 def websocket_con():
     """Run connection to the web socket.
-    Note: We export the app.run() function here so that we can call it in 
+    Note: We export the app.run() function here so that we can call it in
           a separate thread.
     """
     # execute the app
@@ -141,14 +148,14 @@ def getHistData(req_num, contract, duration, candle_size):
 def storeData(tradeapp_obj, symbols):
     """store the requested tickers data in a pandas data frame"""
     df_data = {}
-    for symbol in symbols:
-        df_data[symbol] = pd.DataFrame(tradeapp_obj.data[symbols.index(symbol)])
+    for counter, symbol in enumerate(symbols):
+        df_data[symbol] = pd.DataFrame(tradeapp_obj.data[counter])
         df_data[symbol].set_index("Date", inplace=True)
     return df_data
 
 
 def runDataRetrieval():
-    # retrieve historical data for a given data det of tickers
+    # retrieve historical data for a given data set of tickers
     tickers_data = {
         "INTC": {"index": 0, "currency": "USD", "exchange": "ISLAND"},
         "BARC": {"index": 1, "currency": "GBP", "exchange": "LSE"},
@@ -218,150 +225,126 @@ def trailStopOrder(direction, quantity, st_price, tr_step=1):
     return order
 
 
-def getOpenOrders():
-    app.reqOpenOrders()
-    time.sleep(1)
-    order_df = app.order_df
-    return order_df
-
-def getCurrentPositions():
-    app.reqPositions()
-    time.sleep(1)
-    pos_df = app.pos_df
-    return pos_df
-
-def getAccountSummary():
-    app.reqAccountSummary(1, "All", "$LEDGER:ALL")
-    time.sleep(1)
-    acc_summ_df = app.acc_summary
-    return acc_summ_df
-
-def getPnlSummary():
-    app.reqPnL(2, "DU3213143", "")
-    time.sleep(1)
-    pnl_summ_df = app.pnl_summary
-    return pnl_summ_df
-
-def MACD(DF,a=12,b=26,c=9):
-    """function to calculate MACD
-       typical values a(fast moving average) = 12; 
-                      b(slow moving average) =26; 
-                      c(signal line ma window) =9"""
-    df = DF.copy()
-    df["MA_Fast"]=df["Close"].ewm(span=a,min_periods=a).mean()
-    df["MA_Slow"]=df["Close"].ewm(span=b,min_periods=b).mean()
-    df["MACD"]=df["MA_Fast"]-df["MA_Slow"]
-    df["Signal"]=df["MACD"].ewm(span=c,min_periods=c).mean()
-    df.dropna(inplace=True)
-    return df
-
-def bollBnd(DF,n=20):
-    "function to calculate Bollinger Band"
-    df = DF.copy()
-    #df["MA"] = df['close'].rolling(n).mean()
-    df["MA"] = df['Close'].ewm(span=n,min_periods=n).mean()
-    df["BB_up"] = df["MA"] + 2*df['Close'].rolling(n).std(ddof=0) #ddof=0 is required since we want to take the standard deviation of the population and not sample
-    df["BB_dn"] = df["MA"] - 2*df['Close'].rolling(n).std(ddof=0) #ddof=0 is required since we want to take the standard deviation of the population and not sample
-    df["BB_width"] = df["BB_up"] - df["BB_dn"]
-    df.dropna(inplace=True)
-    return df
-
-def atr(DF,n):
-    "function to calculate True Range and Average True Range"
-    df = DF.copy()
-    df['H-L']=abs(df['High']-df['Low'])
-    df['H-PC']=abs(df['High']-df['Close'].shift(1))
-    df['L-PC']=abs(df['Low']-df['Close'].shift(1))
-    df['TR']=df[['H-L','H-PC','L-PC']].max(axis=1,skipna=False)
-    #df['ATR'] = df['TR'].rolling(n).mean()
-    df['ATR'] = df['TR'].ewm(com=n,min_periods=n).mean()
-    return df['ATR']
-
-def rsi(DF,n=20):
-    "function to calculate RSI"
-    df = DF.copy()
-    df['delta']=df['Close'] - df['Close'].shift(1)
-    df['gain']=np.where(df['delta']>=0,df['delta'],0)
-    df['loss']=np.where(df['delta']<0,abs(df['delta']),0)
-    avg_gain = []
-    avg_loss = []
-    gain = df['gain'].tolist()
-    loss = df['loss'].tolist()
-    for i in range(len(df)):
-        if i < n:
-            avg_gain.append(np.NaN)
-            avg_loss.append(np.NaN)
-        elif i == n:
-            avg_gain.append(df['gain'].rolling(n).mean()[n])
-            avg_loss.append(df['loss'].rolling(n).mean()[n])
-        elif i > n:
-            avg_gain.append(((n-1)*avg_gain[i-1] + gain[i])/n)
-            avg_loss.append(((n-1)*avg_loss[i-1] + loss[i])/n)
-    df['avg_gain']=np.array(avg_gain)
-    df['avg_loss']=np.array(avg_loss)
-    df['RS'] = df['avg_gain']/df['avg_loss']
-    df['RSI'] = 100 - (100/(1+df['RS']))
-    return df['RSI']
-
-def adx(DF,n=20):
-    "function to calculate ADX"
-    df2 = DF.copy()
-    df2['H-L']=abs(df2['High']-df2['Low'])
-    df2['H-PC']=abs(df2['High']-df2['Close'].shift(1))
-    df2['L-PC']=abs(df2['Low']-df2['Close'].shift(1))
-    df2['TR']=df2[['H-L','H-PC','L-PC']].max(axis=1,skipna=False)
-    df2['+DM']=np.where((df2['High']-df2['High'].shift(1))>(df2['Low'].shift(1)-df2['Low']),df2['High']-df2['High'].shift(1),0)
-    df2['+DM']=np.where(df2['+DM']<0,0,df2['+DM'])
-    df2['-DM']=np.where((df2['Low'].shift(1)-df2['Low'])>(df2['High']-df2['High'].shift(1)),df2['Low'].shift(1)-df2['Low'],0)
-    df2['-DM']=np.where(df2['-DM']<0,0,df2['-DM'])
-
-    df2["+DMMA"]=df2['+DM'].ewm(span=n,min_periods=n).mean()
-    df2["-DMMA"]=df2['-DM'].ewm(span=n,min_periods=n).mean()
-    df2["TRMA"]=df2['TR'].ewm(span=n,min_periods=n).mean()
-
-    df2["+DI"]=100*(df2["+DMMA"]/df2["TRMA"])
-    df2["-DI"]=100*(df2["-DMMA"]/df2["TRMA"])
-    df2["DX"]=100*(abs(df2["+DI"]-df2["-DI"])/(df2["+DI"]+df2["-DI"]))
-    
-    df2["ADX"]=df2["DX"].ewm(span=n,min_periods=n).mean()
-
-    return df2['ADX']
-
-def stochOscltr(DF,a=20,b=3):
-    """function to calculate Stochastics
-       a = lookback period
-       b = moving average window for %D"""
-    df = DF.copy()
-    df['C-L'] = df['Close'] - df['Low'].rolling(a).min()
-    df['H-L'] = df['High'].rolling(a).max() - df['Low'].rolling(a).min()
-    df['%K'] = df['C-L']/df['H-L']*100
-    df['%D'] = df['%K'].ewm(span=b,min_periods=b).mean()
-    return df[['%K','%D']]
-
-################################################################################
-################################# main script ##################################
-################################################################################
+###############################################################################
 
 # create an event object for asynchronous execution
 event = threading.Event()
 
 # define app as connection to ibapi client through the wrapper
 app = TradingApp()
-app.connect("127.0.0.1", 7497, clientId=1)
+app.connect("127.0.0.1", 7497, clientId=1)  # paper
+# app.connect("127.0.0.1", 7496, clientId=1)  # live
 
 # start the connection on a separate deamon thread
 con_thread = threading.Thread(target=websocket_con)
 con_thread.start()
-
 # some latency to ensure that the connection was established as you move on
 time.sleep(1)
 
+print("Interactive Brokers Trade Bot is up and running.")
 
 #
-# RETRIEVE HISTORICAL MARKET DATA
+# 1. CHECK ACCOUNT
 #
 
-# runDataRetrieval()
+print("1. We start checking the account")
+
+# get current positions
+pos_df = account.getCurrentPositions(app)
+tickers_curr = pos_df.Symbol.to_numpy()
+print(f" Currently holding {len(tickers_curr)} positions: {', '.join(tickers_curr)}.")
+
+# move ahead if we hold less than 5 positions
+if len(tickers_curr) < 5:
+    print(f" We can start a trade for {5 - len(tickers_curr)} position.")
+else:
+    print(" We are already running on full thruttle. Wait for a sell.")
+
+# get account summary
+acc_df = account.getAccountSummary(app)
+current_balance = acc_df[(acc_df.Currency == 'EUR') & (acc_df.Tag == "CashBalance")]['Value'].values[0]
+print(f" Currently {current_balance} Euro to spend on our cash balance.")
+
+# allocate budget for trade
+if float(current_balance) < 50:
+    # only allow for trades if there is sufficient budget
+    print(f" You only have {current_balance} Euro available cash.")
+    print(" That's not enough to make a trade. Top up.")
+else:
+    # distribute available cash evenly across 5 trade threads
+    # but not more then 2000 per thread
+    trade_budget = min(float(current_balance)/(5 - len(tickers_curr)), 2000)
+    print(f" Available trade budget set to {trade_budget} Euro.")
+
+#
+# 2. SCREEN NASDAQ
+#
+
+print("2. Start screening for potential trade candidates.")
+
+# retrieve a complete list of all nasdaq tickers
+nasdaq_complete = pd.read_csv('ibkr/data/nasdaq_screener_1612425832719.csv')
+# select the 250 largest by market cap
+nasdaq_complete = nasdaq_complete.nlargest(250, 'Market Cap')
+# save list of nasdaq tickers
+tickers_nasdaq = nasdaq_complete.Symbol.to_numpy()
+print(f" Loaded {len(tickers_nasdaq)} strongest tickers from the NASDAQ exchange.")
+
+# retrieve historical data for selected nasdaq tickers
+ticker_nasdaq_dict = {}
+for counter, ticker in enumerate(tickers_nasdaq):
+    # prepare a dict with counter and ticker
+    ticker_nasdaq_dict[counter] = ticker
+    # get contract details
+    contract = getContract(
+        symbol=ticker,
+        secType="STK",
+        currency="USD",
+        exchange="ISLAND",
+    )
+    # get historic data
+    getHistData(
+        req_num=counter,
+        contract=contract,
+        duration="3600 S",
+        candle_size="1 hour",
+    )
+    # make the loop sleep for a bit to allow multiple API calls
+    time.sleep(2.5)
+
+# prepare screened data
+data_screened = app.data
+df_scrnd = pd.DataFrame()
+for row in data_screened:
+    df_load = pd.DataFrame.from_dict(data_screened[row])
+    df_load['counter'] = row
+    df_load['ticker'] = df_load['counter'].map(ticker_nasdaq_dict)
+    df_load.set_index("Date", inplace=True)
+    df_load = df_load.drop_duplicates()
+    df_load['rel_change'] = ((df_load.Close / df_load.Open) - 1) * 100
+    df_scrnd = df_scrnd.append(df_load)
+
+# report status
+tickers_scrnd = df_scrnd['ticker'].dropna().unique()
+print(f" Retrieved historical data for {len(tickers_scrnd)} tickers.")
+
+# filter for the 50 most traded stocks
+df_scrnd = df_scrnd.nlargest(50, 'Volume')
+
+# filter for the 20 biggest winners and losers
+df_scrnd = df_scrnd.sort_values('rel_change')
+df_scrnd = pd.concat([df_scrnd.head(10), df_scrnd.tail(10)])
+tickers_scrnd = df_scrnd['ticker'].dropna().unique()
+
+# report status
+print(f" Selected {len(tickers_scrnd)} for further technical analysis.")
+print(f" Tickers: {', '.join(tickers_scrnd)}.")
+
+#
+# 3. DEPLOY STRATEGY
+#
+
+print("3. Running the strategy")
 
 #
 # PLACE ORDERS
@@ -379,19 +362,6 @@ time.sleep(1)
 
 # EClient function to request contract details
 #app.placeOrder(order_id, contract, order)
-
-
-# get open orders
-#order_df = getOpenOrders()
-
-# get current positions
-#pos_df = getCurrentPositions()
-
-# get account summary
-#acc_df = getAccountSummary()
-
-# get profit and loss summary
-#pnl_df = getPnlSummary()
 
 
 #
