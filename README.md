@@ -16,11 +16,6 @@ General
 
 - [ ] https://youtu.be/8oY1NdPm0mA "9 Things I Learned from Building an Automated Trading System" on YouTube
 
-Interactive Brokers 
-
-- [ ] https://youtu.be/nz6F8eNbk1A "Interactive Brokers API Python Library | Background & Setup Pt. 1" on YouTube
-- [ ] https://www.youtube.com/watch?v=mgl8MMkjZlo&list=PL2CxUzX6saFkoRYNDS19pFzpBIiIsXEPo&index=17&ab_channel=DataSpeakslouder playlist on YouTube
-
 Machine learning algorithms for trading
 
 - [ ] https://youtube.com/channel/UCbmb5IoBtHZTpYZCDBOC1CA Several videos on  "Computer Science" YoutTube Channel
@@ -41,7 +36,3 @@ Feature engineering
 - [ ] https://www.youtube.com/watch?v=hngHA9Jjbjc&ab_channel=RichardMoglen Build a stock screener
 - [ ] https://medium.com/statsbull/day-traders-guide-to-stock-selection-using-python-59bca304ae5e
 - [ ] https://medium.com/@Nikhilkohli1/extracting-features-for-stock-prediction-streamlit-based-application-a97afc55d926
-
-Trading Bitcoins
-
-- [ ] https://youtu.be/iXGnNPL89Wo "How to do Automated Bitcoin Algo Trading via BTC-e Trade API" on YouTube

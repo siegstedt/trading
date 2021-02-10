@@ -166,6 +166,7 @@ def main():
     app.reqOpenOrders()
     time.sleep(2)
     ord_df = app.order_df
+    print(ord_df)
     for ticker in tickers:
         print("starting passthrough for.....",ticker)
         histData(tickers.index(ticker),usTechStk(ticker),'1 M', '15 mins')
@@ -210,13 +211,16 @@ def main():
                    app.placeOrder(order_id,usTechStk(ticker),marketOrder("BUY",quantity))
                    app.placeOrder(order_id+1,usTechStk(ticker),stopOrder("SELL",quantity,round(df["Close"][-1]-df["atr"][-1],1)))
             elif pos_df[pos_df["Symbol"]==ticker]["Position"].sort_values(ascending=True).values[-1] > 0:
-                ord_id = ord_df[ord_df["Symbol"]==ticker]["OrderId"].sort_values(ascending=True).values[-1]
-                old_quantity = pos_df[pos_df["Symbol"]==ticker]["Position"].sort_values(ascending=True).values[-1]
-                app.cancelOrder(ord_id)
-                app.reqIds(-1)
-                time.sleep(2)
-                order_id = app.nextValidOrderId
-                app.placeOrder(order_id,usTechStk(ticker),stopOrder("SELL",old_quantity,round(df["Close"][-1]-df["atr"][-1],1)))
+                if ord_df.empty:
+                    print(f"No orders placed for {ticker}.")
+                else:
+                    ord_id = ord_df[ord_df["Symbol"]==ticker]["OrderId"].sort_values(ascending=True).values[-1]
+                    old_quantity = pos_df[pos_df["Symbol"]==ticker]["Position"].sort_values(ascending=True).values[-1]
+                    app.cancelOrder(ord_id)
+                    app.reqIds(-1)
+                    time.sleep(2)
+                    order_id = app.nextValidOrderId
+                    app.placeOrder(order_id,usTechStk(ticker),stopOrder("SELL",old_quantity,round(df["Close"][-1]-df["atr"][-1],1)))
 
 
 #extract and store historical data in dataframe repetitively

@@ -14,7 +14,7 @@ def MACD(DF, a=12, b=26, c=9):
     df["MA_Slow"] = df["Close"].ewm(span=b, min_periods=b).mean()
     df["MACD"] = df["MA_Fast"] - df["MA_Slow"]
     df["Signal"] = df["MACD"].ewm(span=c, min_periods=c).mean()
-    df.dropna(inplace=True)
+    # df.dropna(inplace=True)
     return df
 
 
@@ -111,8 +111,8 @@ def stochOscltr(DF, a=20, b=3):
        a = lookback period
        b = moving average window for %D"""
     df = DF.copy()
-    df["C-L"] = df["Close"] - df["Low"].rolling(a).min()
-    df["H-L"] = df["High"].rolling(a).max() - df["Low"].rolling(a).min()
-    df["%K"] = df["C-L"] / df["H-L"] * 100
-    df["%D"] = df["%K"].ewm(span=b, min_periods=b).mean()
-    return df[["%K", "%D"]]
+    df['C-L'] = df['Close'] - df['Low'].rolling(a).min()
+    df['H-L'] = df['High'].rolling(a).max() - df['Low'].rolling(a).min()
+    df['%K'] = df['C-L']/df['H-L']*100
+    # df['%D'] = df['%K'].ewm(span=b,min_periods=b).mean()
+    return df['%K'].rolling(b).mean()
