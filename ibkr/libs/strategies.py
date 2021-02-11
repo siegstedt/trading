@@ -114,5 +114,5 @@ def stochOscltr(DF, a=20, b=3):
     df['C-L'] = df['Close'] - df['Low'].rolling(a).min()
     df['H-L'] = df['High'].rolling(a).max() - df['Low'].rolling(a).min()
     df['%K'] = df['C-L']/df['H-L']*100
-    # df['%D'] = df['%K'].ewm(span=b,min_periods=b).mean()
-    return df['%K'].rolling(b).mean()
+    df['%D'] = df['%K'].ewm(span=b, min_periods=b).mean()
+    return df['%D'].rolling(b).mean()

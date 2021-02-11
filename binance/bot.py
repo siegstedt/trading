@@ -14,19 +14,8 @@ import pandas as pd
 import config
 import libs.TA as ta
 
-SOCKET = "wss://stream.binance.com:9443/ws/ethusdt@kline_1m"
 
-client = Client(config.API_KEY, config.API_SECRET, tld='com')
-
-RSI_PERIOD = 14
-RSI_OVERSOLD = 30
-RSI_OVERBOUGHT = 70
-SYMBOL = "ETH"
-QUANTITY = 0.035
-
-closes = []
-in_position = False
-
+# define funcitons
 
 def order(side, quantity, symbol, order_type):
     try:
@@ -101,6 +90,19 @@ def on_message(ws, message):
                         in_position = True
 
 
+# set some variables
+
+SOCKET = "wss://stream.binance.com:9443/ws/ethusdt@kline_1m"
+client = Client(config.API_KEY, config.API_SECRET, tld='com')
+
+RSI_PERIOD = 14
+RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 70
+SYMBOL = "ETH"
+QUANTITY = 0.035
+
+closes = []
+in_position = False
 
 ws = websocket.WebSocketApp(
     SOCKET,

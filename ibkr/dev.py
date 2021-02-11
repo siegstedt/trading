@@ -132,6 +132,10 @@ class TradingApp(EWrapper, EClient):
             "Position": position,
             "Avg cost": avgCost,
         }
+        # delete all old entries from self.pos_df
+        self.pos_df = pd.DataFrame(columns=self.pos_df.columns)
+
+        # append new entries into self.pos_df
         self.pos_df = self.pos_df.append(dictionary, ignore_index=True)
 
     def positionEnd(self):
@@ -286,72 +290,75 @@ def updateStopLoss(iteration, positions, orders):
         df.set_index("Date", inplace=True)
         df["atr"] = strategies.atr(df, 60)
 
-        # If current price over bought price
+        # if there are no orders yet placed
+        if orders[orders["Symbol"] == ticker].empty:
+            print(f">>> {ticker}: No placed orders for ticker {ticker}.")
+            # place a stop loss order
+            old_quantity = (
+                positions[positions["Symbol"] == ticker]["Position"]
+                .sort_values(ascending=True)
+                .values[-1]
+            )
+            order_id = app.nextValidOrderId
+            time.sleep(2)
+            contract = getContract(
+                symbol=ticker,
+                secType="STK",
+                currency="USD",
+                exchange="ISLAND",
+            )
+            app.placeOrder(
+                order_id + 1,
+                contract,
+                stopOrder(
+                    "SELL",
+                    old_quantity,
+                    round(df["Close"][-1] - df["atr"][-1], 1),
+                ),
+            )
+            time.sleep(2)
+            continue
+
+        # If current marvet value over total expenses
         last_closing_price = df["Close"][-1]
         bot_price = positions[(positions["Symbol"] == ticker)]["Avg cost"].sort_values(ascending=True).values[-1]
-        if float(last_closing_price) > float(bot_price):
-            if orders[orders["Symbol"] == ticker].empty:
-                print(f">>> {ticker}: No placed orders for ticker {ticker}.")
-                # place a stop loss order
-                old_quantity = (
-                    positions[positions["Symbol"] == ticker]["Position"]
-                    .sort_values(ascending=True)
-                    .values[-1]
-                )
-                order_id = app.nextValidOrderId
-                time.sleep(2)
-                contract = getContract(
-                    symbol=ticker,
-                    secType="STK",
-                    currency="USD",
-                    exchange="ISLAND",
-                )
-                app.placeOrder(
-                    order_id + 1,
-                    contract,
-                    stopOrder(
-                        "SELL",
-                        old_quantity,
-                        round(df["Close"][-1] - df["atr"][-1], 1),
-                    ),
-                )
-                time.sleep(2)
-
-            else:
-                ord_id = (
-                    orders[orders["Symbol"] == ticker]["OrderId"]
-                    .drop_duplicates()
-                    .sort_values(ascending=True)
-                    .values[-1]
-                )
-                old_quantity = (
-                    positions[positions["Symbol"] == ticker]["Position"]
-                    .sort_values(ascending=True)
-                    .values[-1]
-                )
-                # cancel older buy orders
-                app.cancelOrder(ord_id)
-                app.reqIds(-1)
-                time.sleep(2)
-
-                # place a new stop loss order
-                order_id = app.nextValidOrderId
-                contract = getContract(
-                    symbol=ticker,
-                    secType="STK",
-                    currency="USD",
-                    exchange="ISLAND",
-                )
-                app.placeOrder(
-                    order_id,
-                    contract,
-                    stopOrder(
-                        "SELL",
-                        old_quantity,
-                        round(df["Low"][-1] - df["atr"][-1], 1),
-                    ),
-                )
-                time.sleep(2)
+        hold_positions = positions[(positions["Symbol"] == ticker)]["Position"].sort_values(ascending=True).values[-1]
+        current_value = float(last_closing_price) * float(hold_positions)
+        total_expenses = float(bot_price) * float(hold_positions) + 2
+        if current_value > total_expenses:
+            # cancel older buy orders
+            ord_id = (
+                orders[orders["Symbol"] == ticker]["OrderId"]
+                .drop_duplicates()
+                .sort_values(ascending=True)
+                .values[-1]
+            )
+            old_quantity = (
+                positions[positions["Symbol"] == ticker]["Position"]
+                .sort_values(ascending=True)
+                .values[-1]
+            )
+            app.cancelOrder(ord_id)
+            app.reqIds(-1)
+            time.sleep(2)
+            # place a new stop loss order
+            order_id = app.nextValidOrderId
+            contract = getContract(
+                symbol=ticker,
+                secType="STK",
+                currency="USD",
+                exchange="ISLAND",
+            )
+            app.placeOrder(
+                order_id,
+                contract,
+                stopOrder(
+                    "SELL",
+                    old_quantity,
+                    round(df["Close"][-1] - df["atr"][-1], 1),
+                ),
+            )
+            time.sleep(2)
         else:
             print(f">>> {ticker}: No changes to current orders.")
 
@@ -467,6 +474,7 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
         df["stoch"] = strategies.stochOscltr(df)
         df["macd"] = strategies.MACD(df)["MACD"]
         df["signal"] = strategies.MACD(df)["Signal"]
+        df["adx"]= strategies.adx(df, 20)
         df["atr"] = strategies.atr(df, 60)
         df.dropna(inplace=True)
 
@@ -481,9 +489,12 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
 
         # place orders according to conditions
         if (
-            df["macd"][-1] > df["signal"][-1]
+            df["macd"][-1] > df["signal"][-1] 
             and df["stoch"][-1] > 20
-            and df["stoch"][-1] > df["stoch"][-2]
+            and df["stoch"][-1] < 80
+            and df["stoch"][-1] > df["stoch"][-2] > df["stoch"][-3]
+            and df["adx"][-1] > 20
+            and df["adx"][-1] > df["adx"][-2] > df["adx"][-3]
         ):
             app.reqIds(-1)
             time.sleep(2)
@@ -503,7 +514,7 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
                 stopOrder(
                     "SELL",
                     quantity,
-                    round(df["Low"][-1] - df["atr"][-1], 1),
+                    round(df["Close"][-1] - df["atr"][-1], 1),
                 ),
             )
             # append ticker to list of current tickers
@@ -558,6 +569,7 @@ print("Interactive Brokers Trade Bot is up and running.")
 
 # start while loop
 timeout = compileRuntime(hours=6, minutes=0)
+mins_per_loop = 15
 iteration = 0
 while time.time() <= timeout:
     # break while loop if past 3:30 PM US Eastern time
@@ -580,7 +592,7 @@ while time.time() <= timeout:
 
     # if portfolio is filled, set sleeping time and continue
     if portfolio_size == len(curr_tickers):
-        terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=15)
+        terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=mins_per_loop)
         continue
 
     # allocate trade budget
@@ -597,7 +609,7 @@ while time.time() <= timeout:
     trade_budget = 10000
     if trade_budget < 50:
         print("! Account not sufficiently funded. Inject more capital.")
-        terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=15)
+        terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=mins_per_loop)
         continue
 
     # screen for stocks
@@ -624,7 +636,7 @@ while time.time() <= timeout:
     )
 
     # set a maximum time per while loop
-    terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=15)
+    terminateLoop(iteration=iteration, starttime_loop=starttime_loop, minutes=mins_per_loop)
 
 # liquify all positions and cancel all orders
 liquifyAll()
