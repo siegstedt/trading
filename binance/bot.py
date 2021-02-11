@@ -17,6 +17,15 @@ import libs.TA as ta
 
 # define funcitons
 
+def message_to_df(json_message):
+    event_time = json_message["E"]
+    candle = json_message["k"]
+    candle_dict = {event_time: candle}
+    df_candle = pd.DataFrame.from_dict(candle_dict, orient='index')
+    df_candle.columns = col_names
+    return df_candle
+
+
 def order(side, quantity, symbol, order_type):
     try:
         print("sending order")
@@ -45,22 +54,33 @@ def on_message(ws, message):
     # prepare data from message stream
     global closes
     json_message = json.loads(message)
-    candle = json_message["k"]
-    candle_closed = candle["x"]
-    close = candle["c"]
+    candle_closed = json_message["k"]["x"]
     # iterate through closed prices
     if candle_closed:
-        closes.append(float(close))
+        tick += 1
+        print(f"Clock: TICK! Run number {tick}.")
+        # prepare data for trading
+        df_candle = message_to_df(json_message)
+        df = df.append(df_candle)
+        df = df.tail(500)
         # if enough data collected
-        if len(closes) > RSI_PERIOD:
-            df_close = pd.DataFrame(closes, columns=['Close'])
-            print(df_close)
-            rsi = ta.rsi(df_close, RSI_PERIOD)
-            print(rsi)
-            last_rsi = rsi[-1]
-            print(f"current rsi: {last_rsi}")
-            # trade strategy
-            if last_rsi > RSI_OVERBOUGHT:
+        if df.shape[0] > 14:
+            # prepare technical analysis
+            macd = ta.MACD(df)["MACD"]
+            signal = ta.MACD(df)["Signal"]
+            stoch = ta.stochOscltr(df)
+            adx = ta.adx(df, 20)
+            rsi = ta.rsi(df, RSI_PERIOD)
+            print(f"current rsi: {rsi[-1]}")
+            # sell strategy
+            if (
+                macd[-1] < signal[-1]
+                and rsi[-1] > 50
+                and rsi[-1] < rsi[-2]
+                and adx[-1] > 20
+                and adx[-1] < adx[-2]
+                and stoch[-1] < stoch[-2]
+            ):
                 if in_position:
                     print("sell!")
                     # put binance sell order logic here
@@ -74,7 +94,15 @@ def on_message(ws, message):
                         in_position = False
                 else:
                     print("overbougth but we don't own any")
-            if last_rsi < RSI_OVERSOLD:
+            # buy strategy
+            if (
+                macd[-1] > signal[-1]
+                and rsi[-1] < 60
+                and rsi[-1] > rsi[-2]
+                and adx[-1] > 20
+                and adx[-1] > adx[-2]
+                and stoch[-1] > stoch[-2]
+            ):
                 if in_position:
                     print("it is oversold. but you already own")
                 else:
@@ -96,13 +124,32 @@ SOCKET = "wss://stream.binance.com:9443/ws/ethusdt@kline_1m"
 client = Client(config.API_KEY, config.API_SECRET, tld='com')
 
 RSI_PERIOD = 14
-RSI_OVERSOLD = 30
-RSI_OVERBOUGHT = 70
-SYMBOL = "ETH"
-QUANTITY = 0.035
+SYMBOL = "ETHUSD"
+QUANTITY = 0.02
 
-closes = []
+col_names = [
+    "Start_time",
+    "Close_time",
+    "Symbol",
+    "Interval",
+    "First_trade",
+    "Last_trade",
+    "Open",
+    "Close",
+    "High",
+    "Close",
+    "Low",
+    "Volume",
+    "Number",
+    "Candel_closed",
+    "Quote_volume",
+    "Taker_buy_base_volume",
+    "Taker_buy_quote_volume",
+    ]
+df = pd.DataFrame(columns=col_names)
+
 in_position = False
+tick = 0
 
 ws = websocket.WebSocketApp(
     SOCKET,

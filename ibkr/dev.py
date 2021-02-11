@@ -474,7 +474,7 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
         df["stoch"] = strategies.stochOscltr(df)
         df["macd"] = strategies.MACD(df)["MACD"]
         df["signal"] = strategies.MACD(df)["Signal"]
-        df["adx"]= strategies.adx(df, 20)
+        df["adx"] = strategies.adx(df, 20)
         df["atr"] = strategies.atr(df, 60)
         df.dropna(inplace=True)
 
