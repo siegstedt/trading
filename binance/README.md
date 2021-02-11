@@ -4,4 +4,5 @@ Idea of this project is to build an app that trades crytpocurrencies on the Bina
 
 ## Configuration
 
-**websocket info:** WSS://stream.binance.com:9433
+**websocket info:** WSS://stream.binance.com:9443/ws/
+**stream names:** <symbol>@kline_<interval>

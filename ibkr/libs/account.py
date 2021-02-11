@@ -23,7 +23,7 @@ def getCurrentPositionsList(app):
     app.reqPositions()
     time.sleep(1)
     pos_df = app.pos_df
-    pos_df = pos_df[pos_df.Position != 0].drop_duplicates()
+    pos_df = pos_df[pos_df.Position > 0].drop_duplicates()
     tickers_curr = np.unique(pos_df.Symbol.to_numpy())
     return tickers_curr
 

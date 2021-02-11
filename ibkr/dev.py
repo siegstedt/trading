@@ -261,7 +261,7 @@ def trailStopOrder(direction, quantity, st_price, tr_step=1):
 
 def updateStopLoss(iteration, positions, orders):
     # Iterate through tickers we are currently invested in
-    positions = positions[positions["Position"] != 0]
+    positions = positions[positions["Position"] > 0]
     curr_tickers = np.unique(positions.Symbol.to_numpy())
     for counter, ticker in enumerate(curr_tickers):
         counter = iteration * 1000000 + 1000 + counter
