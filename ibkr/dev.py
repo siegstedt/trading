@@ -489,11 +489,9 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
 
         # place orders according to conditions
         if (
-            df["macd"][-1] > df["signal"][-1] 
-            and df["stoch"][-1] > 20
+            df["macd"][-1] > df["signal"][-1]
             and df["stoch"][-1] < 80
             and df["stoch"][-1] > df["stoch"][-2] > df["stoch"][-3]
-            and df["adx"][-1] > 20
             and df["adx"][-1] > df["adx"][-2] > df["adx"][-3]
         ):
             app.reqIds(-1)
