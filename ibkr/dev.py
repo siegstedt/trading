@@ -119,6 +119,10 @@ class TradingApp(EWrapper, EClient):
             "AuxPrice": order.auxPrice,
             "Status": orderState.status,
         }
+        # delete all old entries from self.order_df
+        self.order_df = pd.DataFrame(columns=self.order_df.columns)
+
+        # append new entries into self.pos_df
         self.order_df = self.order_df.append(dictionary, ignore_index=True)
 
     def position(self, account, contract, position, avgCost):
@@ -263,6 +267,22 @@ def trailStopOrder(direction, quantity, st_price, tr_step=1):
     return order
 
 
+def cancelUnbackedOrders(orders, positions):
+    """cancel orders where there is no corresponding position"""
+    # get list of current positions
+    curr_tickers = np.unique(positions.Symbol.to_numpy())
+    order_tickers = np.unique(orders.Symbol.to_numpy())
+
+    # iterate through order tickers that are not in position
+    for ticker in (t for t in order_tickers if t not in curr_tickers):
+        # cancel open orders
+        orders_list = np.unique(orders[orders["Symbol"] == ticker]["OrderId"].to_numpy())
+        for ord_id in orders_list:            
+            app.cancelOrder(ord_id)
+            app.reqIds(-1)
+            time.sleep(2)
+
+
 def updateStopLoss(iteration, positions, orders):
     # Iterate through tickers we are currently invested in
     positions = positions[positions["Position"] > 0]
@@ -325,42 +345,26 @@ def updateStopLoss(iteration, positions, orders):
         hold_positions = positions[(positions["Symbol"] == ticker)]["Position"].sort_values(ascending=True).values[-1]
         current_value = float(last_closing_price) * float(hold_positions)
         total_expenses = float(bot_price) * float(hold_positions) + 2
+        print(f">>> {ticker}: Current value at {int(current_value)}. Total buying expense at {int(total_expenses)}.")
         if current_value > total_expenses:
-            # cancel older buy orders
-            ord_id = (
-                orders[orders["Symbol"] == ticker]["OrderId"]
-                .drop_duplicates()
-                .sort_values(ascending=True)
-                .values[-1]
-            )
-            old_quantity = (
-                positions[positions["Symbol"] == ticker]["Position"]
-                .sort_values(ascending=True)
-                .values[-1]
-            )
-            app.cancelOrder(ord_id)
-            app.reqIds(-1)
-            time.sleep(2)
-            # place a new stop loss order
+            # cancel open orders
+            orders_list = np.unique(orders[orders["Symbol"] == ticker]["OrderId"].to_numpy())
+            for ord_id in orders_list:            
+                app.cancelOrder(ord_id)
+                app.reqIds(-1)
+                time.sleep(2)
+            # prepare order
             order_id = app.nextValidOrderId
-            contract = getContract(
-                symbol=ticker,
-                secType="STK",
-                currency="USD",
-                exchange="ISLAND",
-            )
-            app.placeOrder(
-                order_id,
-                contract,
-                stopOrder(
-                    "SELL",
-                    old_quantity,
-                    round(df["Close"][-1] - df["atr"][-1], 1),
-                ),
-            )
+            contract = getContract(ticker, "STK", "USD", "ISLAND")
+            # place a stop loss order
+            stop_loss_price = round(df["Close"][-1] - df["atr"][-1], 1)
+            app.placeOrder(order_id, contract, stopOrder("SELL", hold_positions, stop_loss_price))
+            # place a limit sell order for making a margin
+            min_sell_price = round((current_value*1.001) / hold_positions, 1)
+            app.placeOrder(order_id, contract, limitOrder("SELL", hold_positions, min_sell_price))
             time.sleep(2)
         else:
-            print(f">>> {ticker}: No changes to current orders.")
+            print(f">>> {ticker}: Buying expenses not covered. No changes to current orders.")
 
 
 def stockScreener(iteration, positions, num_basis=250, num_extract=20, new_day=False):
@@ -438,7 +442,6 @@ def stockScreener(iteration, positions, num_basis=250, num_extract=20, new_day=F
 
 def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
     # prepare list of current positions
-    positions = positions[positions["Position"] != 0]
     curr_tickers = np.unique(positions.Symbol.to_numpy())
 
     # iterate over submitted list tickers
@@ -503,20 +506,16 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
                 currency="USD",
                 exchange="ISLAND",
             )
-            # place a buy order
-            app.placeOrder(order_id, contract, marketOrder("BUY", quantity))
+            # place a limit buy order
+            limit_price = round((df["Close"][-1]+df["Low"][-1])/2, 1)
+            app.placeOrder(order_id, contract, limitOrder("BUY", quantity, limit_price))            
             # place a stop loss order
-            app.placeOrder(
-                order_id + 1,
-                contract,
-                stopOrder(
-                    "SELL",
-                    quantity,
-                    round(df["Close"][-1] - df["atr"][-1], 1),
-                ),
-            )
-            # append ticker to list of current tickers
-            curr_tickers = np.append(curr_tickers, ticker)
+            stop_loss_price = round(df["Close"][-1] - df["atr"][-1], 1)
+            app.placeOrder(order_id + 1, contract, stopOrder("SELL", quantity, stop_loss_price))
+            # place a limit sell order for making a margin
+            min_sell_price = round((limit_price*quantity*1.005) / quantity, 1)
+            app.placeOrder(order_id + 2, contract, limitOrder("SELL", quantity, min_sell_price))
+            time.sleep(2)
         else:
             print(f">>> {ticker}: Criteria not met. No orders placed.")
 
@@ -531,12 +530,7 @@ def liquifyAll():
 
     for ticker in positions["Symbol"]:
         quantity = positions[positions["Symbol"] == ticker]["Position"].values[0]
-        contract = getContract(
-            symbol=ticker,
-            secType="STK",
-            currency="USD",
-            exchange="ISLAND",
-        )
+        contract = getContract(ticker,"STK","USD","ISLAND")
         app.placeOrder(order_id, contract, marketOrder("SELL", quantity))
         order_id += 1
 
@@ -581,10 +575,13 @@ while time.time() <= timeout:
     # prepare variables for the loop
     curr_tickers = account.getCurrentPositionsList(app)
     positions = account.getCurrentPositions(app)
+    orders = account.getOpenOrders(app)
+
+    # cancel orders where there is no respective position
+    cancelUnbackedOrders(orders=orders, positions=positions)
 
     # run through current positions for updating stop loss
     if len(curr_tickers) > 0:
-        orders = account.getOpenOrders(app)
         print(f">> Update stop loss orders in loop # {iteration}")
         updateStopLoss(iteration=iteration, positions=positions, orders=orders)
 
