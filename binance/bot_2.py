@@ -94,6 +94,10 @@ def on_message(ws, message):
     if candle_closed:
         tick += 1
         print(f"TICK! Run number: {tick}.")
+        if in_position:
+            print(f"> We hold {QUANTITY} coins of {SYMBOL}.")
+        else:
+            print(f"> We don't own any {SYMBOL} yet. Let's see if we can buy.")
         print(f"> {candle['s']} closed at {candle['c']}. High {candle['h']}. Low {candle['l']}.")
         # prepare dataframe for trading
         candle_dict[event_time] = candle
@@ -111,16 +115,18 @@ def on_message(ws, message):
         print("check 3")
         df_candle["adx"] = ta.adx(df_candle, 20)
         print("check 4")
-        df_candle["rsi"] = ta.rsi(df_candle, 14)
+        # df_candle["rsi"] = ta.rsi(df_candle, 14)
         print("> Technical analysis done. Values:")
-        print(f"> MACD: {df_candle['macd'].iloc[-1]}. Signal: {df_candle['signal'].iloc[-1]}. Stoch: {df_candle['stoch'].iloc[-1]}. ADX: {df_candle['adx'].iloc[-1]}. RSI: {df_candle['rsi'].iloc[-1]}.")
+        # print(f"> MACD: {df_candle['macd'].iloc[-1]}. Signal: {df_candle['signal'].iloc[-1]}. Stoch: {df_candle['stoch'].iloc[-1]}. ADX: {df_candle['adx'].iloc[-1]}. RSI: {df_candle['rsi'].iloc[-1]}.")
+        print(f"> MACD: {df_candle['macd'].iloc[-1]}. Signal: {df_candle['signal'].iloc[-1]}. Stoch: {df_candle['stoch'].iloc[-1]}. ADX: {df_candle['adx'].iloc[-1]}.")
         # sell strategy
         if (
             df_candle["macd"].iloc[-1] < df_candle["signal"].iloc[-1]
-            and df_candle["rsi"].iloc[-1] > 50
-            and df_candle["rsi"].iloc[-1] < df_candle["rsi"].iloc[-2]
+            #and df_candle["rsi"].iloc[-1] > 50
+            #and df_candle["rsi"].iloc[-1] < df_candle["rsi"].iloc[-2]
             and df_candle["adx"].iloc[-1] > 20
             and df_candle["adx"].iloc[-1] < df_candle["adx"].iloc[-2]
+            and df_candle["stoch"].iloc[-1] > 50
             and df_candle["stoch"].iloc[-1] < df_candle["stoch"].iloc[-2]
         ):
             if in_position:
@@ -141,10 +147,11 @@ def on_message(ws, message):
         # buy strategy
         if (
             df_candle["macd"].iloc[-1] > df_candle["signal"].iloc[-1]
-            and df_candle["rsi"].iloc[-1] < 60
-            and df_candle["rsi"].iloc[-1] > df_candle["rsi"].iloc[-2]
+            #and df_candle["rsi"].iloc[-1] < 60
+            #and df_candle["rsi"].iloc[-1] > df_candle["rsi"].iloc[-2]
             and df_candle["adx"].iloc[-1] > 20
             and df_candle["adx"].iloc[-1] > df_candle["adx"].iloc[-2]
+            and df_candle["stoch"].iloc[-1] < 60
             and df_candle["stoch"].iloc[-1] > df_candle["stoch"].iloc[-2]
         ):
             if in_position:
