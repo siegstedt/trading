@@ -1,0 +1,16 @@
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Visual studio config
+.vscode/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# OS generated files
+.DS_Store
+

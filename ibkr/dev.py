@@ -321,21 +321,9 @@ def updateStopLoss(iteration, positions, orders):
             )
             order_id = app.nextValidOrderId
             time.sleep(2)
-            contract = getContract(
-                symbol=ticker,
-                secType="STK",
-                currency="USD",
-                exchange="ISLAND",
-            )
-            app.placeOrder(
-                order_id + 1,
-                contract,
-                stopOrder(
-                    "SELL",
-                    old_quantity,
-                    round(df["Close"][-1] - df["atr"][-1], 1),
-                ),
-            )
+            contract = getContract(ticker, "STK", "USD", "ISLAND")
+            stop_loss_price = round(df["Close"][-1] - df["atr"][-1], 1)
+            app.placeOrder(order_id + 1, contract, stopOrder("SELL", old_quantity, stop_loss_price))
             time.sleep(2)
             continue
 
@@ -475,8 +463,8 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
 
         # calculate signals
         df["stoch"] = strategies.stochOscltr(df)
-        df["macd"] = strategies.MACD(df)["MACD"]
-        df["signal"] = strategies.MACD(df)["Signal"]
+        df["macd"] = strategies.MACD(df, 9, 21, 6)["MACD"]
+        df["signal"] = strategies.MACD(df, 9, 21, 6)["Signal"]
         df["adx"] = strategies.adx(df, 20)
         df["atr"] = strategies.atr(df, 60)
         df.dropna(inplace=True)
@@ -510,7 +498,7 @@ def dayTrader(iteration, ticker_list, trade_budget, positions, portfolio_size):
             limit_price = round((df["Close"][-1]+df["Low"][-1])/2, 1)
             app.placeOrder(order_id, contract, limitOrder("BUY", quantity, limit_price))            
             # place a stop loss order
-            stop_loss_price = round(df["Close"][-1] - df["atr"][-1], 1)
+            stop_loss_price = round(limit_price - df["atr"][-1], 1)
             app.placeOrder(order_id + 1, contract, stopOrder("SELL", quantity, stop_loss_price))
             # place a limit sell order for making a margin
             min_sell_price = round((limit_price*quantity*1.005) / quantity, 1)

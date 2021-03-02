@@ -15,20 +15,19 @@ As a broker at the back of the system, Interactive Brokers will serve me with th
 General
 
 - [ ] https://youtu.be/8oY1NdPm0mA "9 Things I Learned from Building an Automated Trading System" on YouTube
+- [ ] https://youtu.be/QZJ1drMQz1A Watch "Linux/Mac Tutorial: Cron Jobs - How to Schedule Commands with crontab" on YouTube
 
 Machine learning algorithms for trading
 
 - [ ] https://youtube.com/channel/UCbmb5IoBtHZTpYZCDBOC1CA Several videos on  "Computer Science" YoutTube Channel
-- [ ] https://youtu.be/kz_NJERCgm8  "Algorithmic Trading Strategy Using MACD & Python" on YouTube
-- [ ] https://pythonforfinance.net/2017/10/10/stochastic-oscillator-trading-strategy-backtest-in-python/
-- [ ] https://www.mql5.com/en/blogs/post/722543
-- [ ] https://medium.com/ai-in-plain-english/creating-a-random-forest-algorithm-for-financial-trading-decision-making-779bfb5a91c7
 - [ ] https://medium.com/ai-in-plain-english/combining-technical-indicators-with-deep-learning-for-stock-trading-aebf155fe22f
 - [ ] http://swing.tradingninja.com/how-to-use-random-forests-algorithm-in-trading/
 - [ ] https://blog.quantinsti.com/random-forest-algorithm-in-python/
 - [ ] https://blog.quantinsti.com/predicting-stock-trends-technical-analysis-random-forests/
 - [ ] https://youtu.be/QIUxPv5PJOY "Stock Price Prediction Using Python & Machine Learning" on YouTube
 - [ ] https://medium.com/ai-in-plain-english/how-i-create-my-stock-price-predictor-f38c229b758e
+- [ ] https://youtu.be/gSYiKKoREFI Watch "Multivariate Time Series Prediction with LSTM and Multiple features (Predict Google Stock Price)" on YouTube
+- [ ] https://youtu.be/kolnmZTQev0 Watch "Get Historical Bars from Binance API using Python" on YouTube
 
 Feature engineering
 
