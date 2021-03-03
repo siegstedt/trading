@@ -24,11 +24,9 @@ So don't be foolish. There is no way to predict the market!
 
 So far, the work is on operating trade bots on two different platforms. One for stock trading through the popular platform Interactive Brokers (or "ibkr" for short), and one for crypto trading through the Binance platform (find the folder "binance").
 
-**ibkr**
-https://github.com/siegstedt/trading/tree/main/ibkr
+**ibkr**: https://github.com/siegstedt/trading/tree/main/ibkr
 
-**binance**
-https://github.com/siegstedt/trading/tree/main/binance
+**binance**: https://github.com/siegstedt/trading/tree/main/binance
 
 ## to dos
 
