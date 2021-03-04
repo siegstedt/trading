@@ -159,3 +159,4 @@ dependencies:
     - werkzeug==1.0.1
     - wrapt==1.12.1
     - zope-interface==5.2.0
+prefix: /opt/anaconda3/envs/trading
