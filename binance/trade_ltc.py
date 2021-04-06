@@ -26,10 +26,10 @@ API_SECRET = config.API_SECRET
 print(f"Loaded KEY: '{API_KEY[:5]}...', and  SECRECT: '{API_SECRET[:5]}...'.")
 
 # set some variables
-SOCKET = "wss://stream.binance.com:9443/ws/etheur@kline_1m"
+SOCKET = "wss://stream.binance.com:9443/ws/ltceur@kline_1m"
 client = Client(API_KEY, API_SECRET, tld="com")
-SYMBOL = "ETHEUR"
-QUANTITY = 0.066
+SYMBOL = "LTCEUR"
+QUANTITY = 0.6
 col_names = [
     "Start_time",
     "Close_time",

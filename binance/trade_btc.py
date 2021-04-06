@@ -11,13 +11,23 @@ import json
 import pandas as pd
 
 # custom libraries
-import config
 import libs.TA as ta
 
-# set some variables
+# import modules to navigate on my machine
+import os
+import sys
 
+# append path of config file to user path
+configfile = '~/projects/admin/binance/config.py'
+sys.path.append(os.path.dirname(os.path.expanduser(configfile)))
+import config
+API_KEY = config.API_KEY
+API_SECRET = config.API_SECRET
+print(f"Loaded KEY: '{API_KEY[:5]}...', and  SECRECT: '{API_SECRET[:5]}...'.")
+
+# set some variables
 SOCKET = "wss://stream.binance.com:9443/ws/btceur@kline_1m"
-client = Client(config.API_KEY, config.API_SECRET, tld="com")
+client = Client(API_KEY, API_SECRET, tld="com")
 SYMBOL = "BTCEUR"
 QUANTITY = 0.002
 col_names = [
